@@ -4,15 +4,13 @@ from customers c ;
 
 -- так как customer_id это id покупателя ,то при помощи агр.функции count мы можем посчитать их общее кол-во.														
 
-
-
 select concat(e.first_name, ' ', e.last_name) as name, count(s.sales_id) as operations, round(sum(p.price * s.quantity),0) as income
 from sales s
 join employees e on s.sales_person_id = e.employee_id
 join products p on s.product_id = p.product_id
 group by e.employee_id
 order by income desc
-limit 10; 
+limit 10;
 
 
 --в данном задании главным было соеденение таблиц ,иначе сопоставить данные из разных таблиц было бы невозможно.при помощи concat 
@@ -21,12 +19,16 @@ limit 10;
 -- отсортировали по доходу (income) ,limit использовали для выявления первых 10 продавцов.
 
 
-select concat(e.first_name, ' ', e.last_name) as name, round (avg(p.price * s.quantity)) as average_income
-from sales s
-join employees e on s.sales_person_id = e.employee_id
-join products p on s.product_id = p.product_id
-group by e.employee_id
-order by average_income asc;
+
+SELECT CONCAT(e.first_name, ' ', e.last_name) AS "name",
+       floor(AVG(s.quantity * p.price)) AS average_income
+FROM sales s
+JOIN employees e ON e.employee_id = s.sales_person_id 
+JOIN products p ON s.product_id = p.product_id
+GROUP BY e.employee_id
+HAVING AVG(s.quantity * p.price) < 
+(SELECT AVG(s2.quantity * p2.price) FROM sales s2 JOIN products p2 ON s2.product_id = p2.product_id)
+order by average_income;
 
 
 --в этом пункте мы нашли продавцов с наименьшей средней выручкой для этого использовали агр. функцию avg ,так как числа получились не целыми 
@@ -61,29 +63,28 @@ from sorted_by_day_id;
 
 
 select case		
-when age between 16 and 25 then '16-25'		
-when age between 26 and 40 then '26-40'		
-else '40+'		
-end as age_category,		
+         when age between 16 and 25 then '16-25'		
+         when age between 26 and 40 then '26-40'		
+         else '40+'		
+         end as age_category,		
 count(customer_id) as count		
 from customers		
-group by age_category		
-order by age_category;		
+group by 1		
+order by 1;		
 
 
 --для решения поставленной задачи я использовал case для разбивки по возрастным категориям ,через 		
 --between обозначил пороги возраста по каждой категории ,через then дал название каждой группе 		
 --через count посчитал количество покупателей для каждой категории, далее просто сгруппировал все
 
-
-select to_char(sale_date, 'yyyy-mm') as date,		
-count(distinct customer_id) as total_customers,		
-round(sum(quantity * price),0) as income		
-from sales		
-join products on sales.product_id = products.product_id		
-group by date		
-order by date;		
-
+select 
+	to_char(s.sale_date, 'YYYY-MM') date,
+	count(distinct s.customer_id) total_customers,
+	floor(sum(s.quantity * p.price)) income
+from sales s 
+join products p using (product_id)
+group by 1
+order by 1;
 
 -- с помощью to_char привел дату к выборке по месяцам, далее посчитал количествоуникальных покупателей 		
 -- при помощи count и distinct ,далее посчитал income и округлил при помощи round, после присоеденил данные 		
